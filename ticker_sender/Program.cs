@@ -17,13 +17,21 @@ namespace EpidemicSimulation
             while (true)
             {
                 tick++;
-                Console.WriteLine($"Publishing tick {tick}");
-                await nc.PublishAsync<int>("sim.time.tick", tick);
+                if (Environment.GetEnvironmentVariable("ECHO") != null) {
+                    await nc.PublishAsync<string>("sim.echo", $"Single echo at tick {tick}");
+                    Console.WriteLine($"Publishing tick {tick} to sim echo");
+                }
+                else
+                {
+                    await nc.PublishAsync<int>("sim.time.tick", tick);
+                    Console.WriteLine($"Publishing tick {tick} to sim time tick");
+                }
                 await Task.Delay(1000);  // wait 1 second
                 if (Environment.GetEnvironmentVariable("SPECIAL_COMMAND") != null &&tick >= 15) {
                     await nc.PublishAsync<string>("sim.shutdown", "Automatic shutdown after more than 15 ticks");
                     break;
                 }
+
             }
         }
     }

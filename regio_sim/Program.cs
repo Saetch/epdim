@@ -28,7 +28,8 @@ namespace EpidemicSimulation
             await Task.WhenAll(
                 new SimulationService().TickHandler(nc),
                 new SimulationService().ResetHandler(nc),
-                new SimulationService().ShutdownHandler(nc)
+                new SimulationService().ShutdownHandler(nc),
+                new SimulationService().EchoQueueHandler(nc)
             );
         }
 
@@ -51,6 +52,16 @@ namespace EpidemicSimulation
             {
                 infectedCount = (UInt64)msg.Data;
                 Console.WriteLine($"Service {serviceId} received Reset {msg.Data}: infected = {infectedCount}");
+            }
+
+        }
+
+        async Task EchoQueueHandler(NatsClient nc)
+        {
+
+            await foreach (var msg in nc.SubscribeAsync<string>("sim.echo", queueGroup: "echo_workers", cancellationToken: cts.Token))
+            {
+                Console.WriteLine($"Service {serviceId} received Echo: {msg.Data}");
             }
 
         }

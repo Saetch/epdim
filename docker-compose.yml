@@ -32,7 +32,21 @@ services:
     networks:
       - nats-network
     deploy:
-      replicas: 3
+      replicas: 2
+    depends_on:
+      - nats-main
+  echo-sender:
+    image: ticker-sender 
+    build:
+      context: ./ticker_sender
+      dockerfile: Dockerfile
+    environment:
+      NATS_URL: "nats://nats-main:4222"
+      ECHO: "true"
+    networks:
+      - nats-network
+    deploy:
+      replicas: 1
     depends_on:
       - nats-main
 networks:
