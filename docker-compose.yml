@@ -1,0 +1,38 @@
+services:
+  nats-main:
+    image: nats
+    container_name: nats-main
+    ports:
+      - "4222:4222"   # Client connections
+      - "6222:6222"   # Cluster / route connections
+      - "8222:8222"   # Monitoring HTTP endpoint
+    networks:
+      - nats-network
+
+  regio-sim:
+    image: regio-sim 
+    container_name: regio-sim
+    build:
+      context: ./regio_sim
+      dockerfile: Dockerfile
+    environment:
+      NATS_URL: "nats://nats-main:4222"
+    networks:
+      - nats-network
+    depends_on:
+      - nats-main
+  ticker-sender:
+    image: ticker-sender 
+    container_name: ticker-sender
+    build:
+      context: ./ticker_sender
+      dockerfile: Dockerfile
+    environment:
+      NATS_URL: "nats://nats-main:4222"
+    networks:
+      - nats-network
+    depends_on:
+      - nats-main
+networks:
+  nats-network:
+    driver: bridge
