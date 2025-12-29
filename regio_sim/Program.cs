@@ -26,15 +26,15 @@ namespace EpidemicSimulation
 
             // Subscribe asynchronously to the "sim.time.tick" subject, expecting an int payload
             await Task.WhenAll(
-                new SimulationService().TickHandler(nc),
-                new SimulationService().ResetHandler(nc),
-                new SimulationService().ShutdownHandler(nc),
-                new SimulationService().EchoQueueHandler(nc)
+                SimulationService.TickHandler(nc),
+                SimulationService.ResetHandler(nc),
+                SimulationService.ShutdownHandler(nc),
+                SimulationService.EchoQueueHandler(nc)
             );
         }
 
 
-        async Task TickHandler(NatsClient nc)
+        static async Task TickHandler(NatsClient nc)
         {
 
             await foreach (var msg in nc.SubscribeAsync<int>("sim.time.tick", cancellationToken: cts.Token))
@@ -45,7 +45,7 @@ namespace EpidemicSimulation
 
         }
 
-        async Task ResetHandler(NatsClient nc)
+        static async Task ResetHandler(NatsClient nc)
         {
 
             await foreach (var msg in nc.SubscribeAsync<int>("sim.reset", cancellationToken: cts.Token))
@@ -56,7 +56,7 @@ namespace EpidemicSimulation
 
         }
 
-        async Task EchoQueueHandler(NatsClient nc)
+        static async Task EchoQueueHandler(NatsClient nc)
         {
 
             await foreach (var msg in nc.SubscribeAsync<string>("sim.echo", queueGroup: "echo_workers", cancellationToken: cts.Token))
@@ -66,7 +66,7 @@ namespace EpidemicSimulation
 
         }
 
-        async Task ShutdownHandler(NatsClient nc)
+        static async Task ShutdownHandler(NatsClient nc)
         {
 
             await foreach (var msg in nc.SubscribeAsync<string>("sim.shutdown", cancellationToken: cts.Token))
