@@ -20,6 +20,10 @@ namespace EpidemicSimulation
                 Console.WriteLine($"Publishing tick {tick}");
                 await nc.PublishAsync<int>("sim.time.tick", tick);
                 await Task.Delay(1000);  // wait 1 second
+                if (Environment.GetEnvironmentVariable("SPECIAL_COMMAND") != null &&tick >= 15) {
+                    await nc.PublishAsync<string>("sim.shutdown", "Automatic shutdown after more than 15 ticks");
+                    break;
+                }
             }
         }
     }

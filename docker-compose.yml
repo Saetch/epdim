@@ -11,7 +11,6 @@ services:
 
   regio-sim:
     image: regio-sim 
-    container_name: regio-sim
     build:
       context: ./regio_sim
       dockerfile: Dockerfile
@@ -21,9 +20,10 @@ services:
       - nats-network
     depends_on:
       - nats-main
+    deploy:
+      replicas: 5
   ticker-sender:
     image: ticker-sender 
-    container_name: ticker-sender
     build:
       context: ./ticker_sender
       dockerfile: Dockerfile
@@ -31,6 +31,8 @@ services:
       NATS_URL: "nats://nats-main:4222"
     networks:
       - nats-network
+    deploy:
+      replicas: 3
     depends_on:
       - nats-main
 networks:

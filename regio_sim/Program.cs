@@ -7,6 +7,14 @@ namespace EpidemicSimulation
 {
     class SimulationService
     {
+
+        static CancellationTokenSource cts = new CancellationTokenSource();
+        static UInt64 infectedCount = 1;
+        
+        //give unique UUID to each simulation service
+        static string serviceId = Guid.NewGuid().ToString();
+
+
         static async Task Main(string[] args)
         {
             // Connect to local NATS server (use NATS_URL env var or default to localhost:4222)
@@ -14,18 +22,49 @@ namespace EpidemicSimulation
                         ?? "nats://127.0.0.1:4222";
             await using var nc = new NatsClient(url);
 
-            int infectedCount = 1;
             Console.WriteLine($"Starting si mulation, initial infected: {infectedCount}");
 
-            var cts = new CancellationTokenSource();
             // Subscribe asynchronously to the "sim.time.tick" subject, expecting an int payload
+            await Task.WhenAll(
+                new SimulationService().TickHandler(nc),
+                new SimulationService().ResetHandler(nc),
+                new SimulationService().ShutdownHandler(nc)
+            );
+        }
+
+
+        async Task TickHandler(NatsClient nc)
+        {
+
             await foreach (var msg in nc.SubscribeAsync<int>("sim.time.tick", cancellationToken: cts.Token))
             {
-                int tick = msg.Data;
-                // Update simulation state: simple growth (e.g., add the tick count to infected)
-                infectedCount += tick;
-                Console.WriteLine($"Tick {tick}: Infected count = {infectedCount}");
+                infectedCount += (UInt64)msg.Data;
+                Console.WriteLine($"Service {serviceId} received Tick {msg.Data}: infected = {infectedCount}");
             }
+
         }
+
+        async Task ResetHandler(NatsClient nc)
+        {
+
+            await foreach (var msg in nc.SubscribeAsync<int>("sim.reset", cancellationToken: cts.Token))
+            {
+                infectedCount = (UInt64)msg.Data;
+                Console.WriteLine($"Service {serviceId} received Reset {msg.Data}: infected = {infectedCount}");
+            }
+
+        }
+
+        async Task ShutdownHandler(NatsClient nc)
+        {
+
+            await foreach (var msg in nc.SubscribeAsync<string>("sim.shutdown", cancellationToken: cts.Token))
+            {
+                Console.WriteLine($"Service {serviceId} received Shutdown command. Shutting down... : {msg.Data}");
+                cts.Cancel();
+            }
+
+        }
+
     }
 }
